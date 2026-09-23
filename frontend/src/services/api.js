@@ -1,7 +1,15 @@
 import axios from 'axios';
 
-// Normalize base URL: handles both "https://domain.com" and "https://domain.com/api/v1"
-let rawUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
+// Detect whether running locally or in production
+const isLocal = typeof window !== 'undefined' && 
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+// Smart default: uses localhost during dev, and live Render backend when deployed
+const defaultBackendUrl = isLocal 
+  ? 'http://localhost:5000/api/v1' 
+  : 'https://voteremote-backend.onrender.com/api/v1';
+
+let rawUrl = import.meta.env.VITE_API_BASE_URL || defaultBackendUrl;
 rawUrl = rawUrl.trim().replace(/\/+$/, '');
 const API_BASE_URL = rawUrl.endsWith('/api/v1') ? rawUrl : `${rawUrl}/api/v1`;
 
