@@ -7,7 +7,8 @@ import {
   LogOut, 
   Menu, 
   X, 
-  User
+  User,
+  ShieldCheck
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -72,6 +73,7 @@ const Navbar = () => {
               </Link>
             )}
 
+            {/* If Authenticated as Admin */}
             {isAuthenticated && isAdmin && (
               <Link 
                 to="/admin" 
@@ -81,6 +83,18 @@ const Navbar = () => {
               >
                 <Shield className="w-3.5 h-3.5 text-civic-cyan" />
                 <span>Election Authority</span>
+              </Link>
+            )}
+
+            {/* Direct Admin Access Link when not logged in */}
+            {!isAuthenticated && (
+              <Link 
+                to="/login" 
+                className="px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-civic-cyan hover:bg-white/5 rounded-lg transition-colors flex items-center space-x-1"
+                title="Election Authority Portal Login"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-civic-cyan" />
+                <span>Authority Login</span>
               </Link>
             )}
           </nav>
@@ -117,7 +131,7 @@ const Navbar = () => {
                   to="/register"
                   className="px-4 py-1.5 text-xs font-semibold text-white bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 rounded-lg shadow-sm transition-all"
                 >
-                  Register Voter
+                  Register
                 </Link>
               </div>
             )}
@@ -162,6 +176,15 @@ const Navbar = () => {
               className="block px-3 py-2 text-sm font-medium text-civic-cyan hover:bg-white/5 rounded-lg"
             >
               Election Authority Dashboard
+            </Link>
+          )}
+          {!isAuthenticated && (
+            <Link
+              to="/login"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block px-3 py-2 text-sm font-medium text-civic-cyan hover:bg-white/5 rounded-lg"
+            >
+              Election Authority Login
             </Link>
           )}
           

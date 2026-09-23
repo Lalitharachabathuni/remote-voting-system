@@ -15,7 +15,7 @@ const generateSyntheticVoterId = () => {
 };
 
 /**
- * Register a new voter with synthetic profile
+ * Register a new voter or election admin
  */
 const register = async (req, res) => {
   try {
@@ -31,7 +31,9 @@ const register = async (req, res) => {
       currentCity,
       currentState,
       currentPincode,
-      occupation
+      occupation,
+      role, // 'VOTER' or 'ADMIN'
+      authorityPasscode
     } = req.body;
 
     // Validate email uniqueness
@@ -43,18 +45,17 @@ const register = async (req, res) => {
       });
     }
 
-    // Validate constituency
-    let constituencyId = registeredConstituencyId;
-    if (!constituencyId) {
-      const defaultConst = await Constituency.findOne();
-      if (defaultConst) constituencyId = defaultConst._id;
-    }
-
-    if (!constituencyId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please select a valid registered constituency.'
-      });
+    // Check if registering as Administrator / Election Authority
+    let userRole = 'VOTER';
+    if (role === 'ADMIN' || role === 'ELECTION_OFFICER') {
+      const validPasscode = process.env.ADMIN_PASSCODE || 'ADMIN2026';
+      if (authorityPasscode !== validPasscode) {
+        return res.status(403).json({
+          success: false,
+          message: 'Invalid Authority Security Passcode. Authorized election officials only.'
+        });
+      }
+      userRole = role;
     }
 
     // Create User
@@ -64,38 +65,47 @@ const register = async (req, res) => {
       fullName,
       phone,
       dateOfBirth: dateOfBirth || new Date('1998-05-15'),
-      role: 'VOTER',
+      role: userRole,
       accountStatus: 'ACTIVE'
     });
 
     await user.save();
 
-    // Create Voter Profile
-    const syntheticVoterId = generateSyntheticVoterId();
-    const voterProfile = new VoterProfile({
-      userId: user._id,
-      syntheticVoterId,
-      registeredConstituency: constituencyId,
-      registeredState: registeredState || 'Andhra Pradesh',
-      registeredDistrict: registeredDistrict || 'Visakhapatnam',
-      currentCity: currentCity || 'Bengaluru',
-      currentState: currentState || 'Karnataka',
-      currentPincode: currentPincode || '560001',
-      occupation: occupation || 'Software Engineer',
-      verificationStatus: 'VERIFIED'
-    });
+    let voterProfile = null;
 
-    await voterProfile.save();
+    // If voter, create voter profile with constituency
+    if (userRole === 'VOTER') {
+      let constituencyId = registeredConstituencyId;
+      if (!constituencyId) {
+        const defaultConst = await Constituency.findOne();
+        if (defaultConst) constituencyId = defaultConst._id;
+      }
+
+      const syntheticVoterId = generateSyntheticVoterId();
+      voterProfile = new VoterProfile({
+        userId: user._id,
+        syntheticVoterId,
+        registeredConstituency: constituencyId,
+        registeredState: registeredState || 'Andhra Pradesh',
+        registeredDistrict: registeredDistrict || 'Visakhapatnam',
+        currentCity: currentCity || 'Bengaluru',
+        currentState: currentState || 'Karnataka',
+        currentPincode: currentPincode || '560001',
+        occupation: occupation || 'Software Engineer',
+        verificationStatus: 'VERIFIED'
+      });
+
+      await voterProfile.save();
+    }
 
     // Audit log
     await AuditService.logEvent({
-      action: 'VOTER_REGISTRATION',
-      actorRole: 'VOTER',
+      action: userRole === 'VOTER' ? 'VOTER_REGISTRATION' : 'ADMIN_REGISTRATION',
+      actorRole: userRole,
       actorId: user._id.toString(),
       details: {
-        syntheticVoterId,
-        registeredState: voterProfile.registeredState,
-        currentCity: voterProfile.currentCity
+        email: user.email,
+        role: userRole
       },
       ipAddress: req.ip
     });
@@ -113,14 +123,13 @@ const register = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: 'Voter account created successfully.',
+      message: `${userRole === 'VOTER' ? 'Voter' : 'Election Administrator'} account created successfully.`,
       token: accessToken,
       user: {
         id: user._id,
         email: user.email,
         fullName: user.fullName,
         role: user.role,
-        syntheticVoterId,
         voterProfile
       }
     });
@@ -128,7 +137,7 @@ const register = async (req, res) => {
     console.error('Registration Error:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to create voter account',
+      message: 'Failed to create account',
       error: error.message
     });
   }
@@ -171,7 +180,7 @@ const login = async (req, res) => {
     if (!isMatch) {
       user.failedLoginAttempts += 1;
       if (user.failedLoginAttempts >= 5) {
-        user.lockoutUntil = new Date(Date.now() + 15 * 60 * 1000); // 15 mins lock
+        user.lockoutUntil = new Date(Date.now() + 15 * 60 * 1000);
       }
       await user.save();
 
@@ -271,14 +280,14 @@ const getMe = async (req, res) => {
  */
 const demoLogin = async (req, res) => {
   try {
-    const { role } = req.body; // 'VOTER', 'ADMIN', 'OFFICER'
+    const { role } = req.body;
     const targetRole = role || 'VOTER';
 
     const user = await User.findOne({ role: targetRole });
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: `No demo account found for role ${targetRole}. Please run backend seed.`
+        message: `No account found for role ${targetRole}.`
       });
     }
 
@@ -296,7 +305,7 @@ const demoLogin = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: `Logged in as demo ${targetRole}`,
+      message: `Logged in as ${targetRole}`,
       token: accessToken,
       user: {
         id: user._id,
@@ -309,7 +318,7 @@ const demoLogin = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Demo login failed',
+      message: 'Login failed',
       error: error.message
     });
   }
