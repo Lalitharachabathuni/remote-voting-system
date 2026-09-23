@@ -14,22 +14,9 @@ app.use(helmet({
   crossOriginResourcePolicy: false
 }));
 
-// CORS Configuration
-const allowedOrigins = [
-  'http://localhost:5173',
-  'http://localhost:3000',
-  'http://127.0.0.1:5173',
-  process.env.CLIENT_URL
-].filter(Boolean);
-
+// CORS Configuration - Permissive for seamless cross-origin communication between Vercel and Render
 app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(null, true); // Permissive in prototype for easy multi-device testing
-    }
-  },
+  origin: true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-voting-credential']
@@ -41,29 +28,22 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(morgan('dev'));
 
-// Apply rate limiter to /api
+// Apply rate limiter to API routes
 app.use('/api', apiLimiter);
 
 // Root health check endpoint
-app.get('/', (req, res) => {
+app.get('/health', (req, res) => {
   res.json({
     status: 'ONLINE',
-    system: 'VoteRemote - Digital Remote Voting Platform (Academic Prototype)',
-    timestamp: new Date().toISOString(),
-    endpoints: {
-      auth: '/api/v1/auth',
-      elections: '/api/v1/elections',
-      remoteVoting: '/api/v1/remote-voting',
-      voting: '/api/v1/voting',
-      admin: '/api/v1/admin',
-      audit: '/api/v1/audit',
-      analytics: '/api/v1/analytics'
-    }
+    system: 'VoteRemote - Digital Remote Voting Platform',
+    timestamp: new Date().toISOString()
   });
 });
 
-// Mount API v1 Routes
+// Mount Routes with aliases so all URL patterns work smoothly
 app.use('/api/v1', routes);
+app.use('/api', routes);
+app.use('/', routes);
 
 // 404 Handler
 app.use('*', (req, res) => {

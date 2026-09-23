@@ -1,6 +1,9 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
+// Normalize base URL: handles both "https://domain.com" and "https://domain.com/api/v1"
+let rawUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
+rawUrl = rawUrl.trim().replace(/\/+$/, '');
+const API_BASE_URL = rawUrl.endsWith('/api/v1') ? rawUrl : `${rawUrl}/api/v1`;
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -25,12 +28,6 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response && error.response.status === 401) {
-      // If unauthorized on protected voter routes (not anonymous voting ballot), optionally handle cleanup
-      if (!error.config.url.includes('/voting/ballot') && !error.config.url.includes('/voting/cast')) {
-        // Token expired
-      }
-    }
     return Promise.reject(error);
   }
 );
