@@ -1,6 +1,7 @@
 require('dotenv').config();
 const app = require('./app');
 const connectDB = require('./config/db');
+const autoSeedIfEmpty = require('./utils/autoSeed');
 
 const PORT = process.env.PORT || 5000;
 
@@ -8,6 +9,9 @@ const PORT = process.env.PORT || 5000;
 const startServer = async () => {
   try {
     await connectDB();
+    
+    // Auto initialize constituencies and elections if database is fresh
+    await autoSeedIfEmpty();
     
     app.listen(PORT, () => {
       console.log(`=======================================================`);

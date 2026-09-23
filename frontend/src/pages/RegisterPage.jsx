@@ -10,16 +10,42 @@ import {
   Lock, 
   Mail, 
   User, 
-  Calendar,
   Building,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Loader2
 } from 'lucide-react';
 import api from '../services/api';
 
+// Fallback initial constituencies to guarantee dropdown is never empty during server wakeups
+const DEFAULT_CONSTITUENCIES = [
+  {
+    _id: 'default-vizag',
+    name: 'Visakhapatnam Parliamentary Constituency',
+    code: 'PC-AP-04',
+    state: 'Andhra Pradesh',
+    district: 'Visakhapatnam'
+  },
+  {
+    _id: 'default-blr',
+    name: 'Bengaluru South Parliamentary Constituency',
+    code: 'PC-KA-26',
+    state: 'Karnataka',
+    district: 'Bengaluru Urban'
+  },
+  {
+    _id: 'default-hyd',
+    name: 'Hyderabad Parliamentary Constituency',
+    code: 'PC-TS-09',
+    state: 'Telangana',
+    district: 'Hyderabad'
+  }
+];
+
 const RegisterPage = () => {
   const [step, setStep] = useState(1);
-  const [constituencies, setConstituencies] = useState([]);
+  const [constituencies, setConstituencies] = useState(DEFAULT_CONSTITUENCIES);
+  const [constituenciesLoading, setConstituenciesLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -28,9 +54,9 @@ const RegisterPage = () => {
     email: '',
     phone: '',
     dateOfBirth: '1998-06-15',
-    registeredConstituencyId: '',
-    registeredState: 'Andhra Pradesh',
-    registeredDistrict: 'Visakhapatnam',
+    registeredConstituencyId: DEFAULT_CONSTITUENCIES[0]._id,
+    registeredState: DEFAULT_CONSTITUENCIES[0].state,
+    registeredDistrict: DEFAULT_CONSTITUENCIES[0].district,
     currentCity: 'Bengaluru',
     currentState: 'Karnataka',
     currentPincode: '560001',
@@ -49,19 +75,19 @@ const RegisterPage = () => {
   const fetchConstituencies = async () => {
     try {
       const res = await api.get('/elections/constituencies');
-      if (res.data && res.data.constituencies) {
+      if (res.data && res.data.constituencies && res.data.constituencies.length > 0) {
         setConstituencies(res.data.constituencies);
-        if (res.data.constituencies.length > 0) {
-          setFormData(prev => ({
-            ...prev,
-            registeredConstituencyId: res.data.constituencies[0]._id,
-            registeredState: res.data.constituencies[0].state,
-            registeredDistrict: res.data.constituencies[0].district
-          }));
-        }
+        setFormData(prev => ({
+          ...prev,
+          registeredConstituencyId: res.data.constituencies[0]._id,
+          registeredState: res.data.constituencies[0].state,
+          registeredDistrict: res.data.constituencies[0].district
+        }));
       }
     } catch (err) {
-      console.warn('Could not fetch constituencies list:', err.message);
+      console.warn('Could not fetch remote constituencies list, using defaults:', err.message);
+    } finally {
+      setConstituenciesLoading(false);
     }
   };
 
@@ -113,7 +139,16 @@ const RegisterPage = () => {
     }
 
     setLoading(true);
-    const res = await register(formData);
+    
+    // If using fallback default ID, pass empty so backend links the genuine DB constituency
+    const payload = {
+      ...formData,
+      registeredConstituencyId: formData.registeredConstituencyId.startsWith('default-')
+        ? undefined
+        : formData.registeredConstituencyId
+    };
+
+    const res = await register(payload);
     setLoading(false);
 
     if (res.success) {
@@ -136,7 +171,7 @@ const RegisterPage = () => {
             Voter Registration
           </h2>
           <p className="text-xs text-slate-400">
-            Create a synthetic prototype voter profile for remote election access
+            Create a secure voter profile for digital remote election access
           </p>
         </div>
 
@@ -239,9 +274,17 @@ const RegisterPage = () => {
             {step === 2 && (
               <div className="space-y-3 animate-in fade-in">
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">
-                    Registered Home Constituency
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-medium text-slate-300">
+                      Registered Home Constituency
+                    </label>
+                    {constituenciesLoading && (
+                      <span className="text-[10px] text-brand-300 flex items-center space-x-1">
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                        <span>Syncing...</span>
+                      </span>
+                    )}
+                  </div>
                   <select
                     value={formData.registeredConstituencyId}
                     onChange={handleConstituencyChange}
@@ -249,7 +292,7 @@ const RegisterPage = () => {
                   >
                     {constituencies.map(c => (
                       <option key={c._id} value={c._id}>
-                        {c.name} ({c.code} · {c.state})
+                        {c.name} ({c.code || 'PC'} · {c.state})
                       </option>
                     ))}
                   </select>
@@ -309,9 +352,9 @@ const RegisterPage = () => {
                 <div className="bg-brand-500/10 border border-brand-500/20 p-3 rounded-xl text-xs text-brand-300">
                   <div className="font-semibold flex items-center space-x-1 mb-0.5">
                     <ShieldCheck className="w-4 h-4 text-brand-400" />
-                    <span>Synthetic Voter Identifier</span>
+                    <span>Digital Voter Identifier</span>
                   </div>
-                  <span>A unique prototype Voter ID (<code className="font-mono font-bold">VID-2026-XXXX</code>) will be auto-generated upon submission.</span>
+                  <span>A unique Voter ID (<code className="font-mono font-bold">VID-2026-XXXX</code>) will be issued upon registration.</span>
                 </div>
 
                 <div>
