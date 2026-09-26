@@ -1,0 +1,177 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-burgundy: #5A2633;
+    --color-terracotta: #C75C3C;
+    --color-saffron: #E5A83B;
+    --color-jade: #2F8F83;
+    --color-sand: #F5F0E7;
+    --color-warmwhite: #FFFDF8;
+    --color-charcoal: #252322;
+    --color-warmgray: #756E67;
+    --color-sandstone: #DED6CA;
+    --color-terracotta-red: #B9473D;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
+  body {
+    background-color: #F5F0E7;
+    color: #252322;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+}
+
+/* =====================================================
+   VOTEREMOTE CIVIC GLASS & SURFACE UTILITIES
+===================================================== */
+.vr-glass {
+  background: rgba(255, 253, 248, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(222, 214, 202, 0.85);
+}
+
+.vr-glass-burgundy {
+  background: rgba(90, 38, 51, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(229, 168, 59, 0.3);
+}
+
+.vr-card {
+  background-color: #FFFDF8;
+  border: 1px solid #DED6CA;
+  border-radius: 1rem;
+  box-shadow: 0 2px 12px -2px rgba(90, 38, 51, 0.05), 0 1px 4px -1px rgba(90, 38, 51, 0.02);
+}
+
+.vr-card-dark {
+  background-color: #5A2633;
+  border: 1px solid rgba(222, 214, 202, 0.25);
+  border-radius: 1rem;
+  box-shadow: 0 10px 30px -4px rgba(90, 38, 51, 0.35);
+  color: #FFFDF8;
+}
+
+.vr-card-elevated {
+  background-color: #FFFFFF;
+  border: 1px solid #DED6CA;
+  border-radius: 1rem;
+  box-shadow: 0 12px 32px -4px rgba(90, 38, 51, 0.08), 0 4px 12px -2px rgba(90, 38, 51, 0.04);
+}
+
+.vr-card-hover {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.vr-card-hover:hover {
+  border-color: #5A2633;
+  transform: translateY(-2px);
+  box-shadow: 0 16px 36px -4px rgba(90, 38, 51, 0.12);
+}
+
+/* =====================================================
+   VOTEREMOTE CIVIC INPUT STYLES
+===================================================== */
+.vr-input {
+  background-color: #FFFDF8;
+  border: 1px solid #DED6CA;
+  color: #252322;
+  border-radius: 0.625rem;
+  padding: 0.625rem 0.875rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  width: 100%;
+  transition: all 0.2s ease;
+}
+
+.vr-input::placeholder {
+  color: #948D86;
+}
+
+.vr-input:focus {
+  outline: none;
+  border-color: #5A2633;
+  box-shadow: 0 0 0 3px rgba(90, 38, 51, 0.15);
+  background-color: #FFFFFF;
+}
+
+.vr-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: #F5F0E7;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F5F0E7;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #C9BEAF;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #756E67;
+}
+
+/* Glow Utilities */
+.glow-burgundy {
+  box-shadow: 0 0 25px rgba(90, 38, 51, 0.25);
+}
+
+.glow-jade {
+  box-shadow: 0 0 25px rgba(47, 143, 131, 0.25);
+}
+
+.glow-terracotta {
+  box-shadow: 0 0 25px rgba(199, 92, 60, 0.25);
+}
+
+.glow-saffron {
+  box-shadow: 0 0 25px rgba(229, 168, 59, 0.25);
+}
+
+.glow-text-burgundy {
+  text-shadow: 0 0 16px rgba(90, 38, 51, 0.35);
+}
+
+/* Shimmer Loading Skeleton */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg, #F5F0E7 25%, #EFEAE2 50%, #F5F0E7 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.8s infinite;
+}
